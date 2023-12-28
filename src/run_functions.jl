@@ -1,15 +1,13 @@
-using Random
-using ProgressBars
-using DelimitedFiles
-
 const volume = 1
 
 """sequence of all chains as well as length of each chain"""
-mutable struct Results
-    sequences::Array{Int64}
-    lengths::Array{Int64}
+mutable struct System_features
     max_DP::Int64
     n_chains::Int64
+    sequences::Array{Int64}
+    lengths::Array{Int64}
+    r_A::Float64
+    r_B::Float64
 end
 
 function first_monomer(A::Float64, B::Float64)
@@ -52,7 +50,7 @@ function growth(A::Float64, B::Float64, sequence::Array{Int64}, live_position::I
         rates_add[2,2] = 1
         rates_add[2,3] = sum(rates_add[:,1])
     end
-
+    # println(rates_add)
     u = rand()*rates_add[2,3]
 
     if rates_add[1,3] < u <= rates_add[2,3]
@@ -60,11 +58,11 @@ function growth(A::Float64, B::Float64, sequence::Array{Int64}, live_position::I
     elseif u <= rates_add[1,3]
         return rates_add[1,2]
     else
-        println("Error performing move ")
+        println("Error performing move, random number u is ", u)
     end
 end
 
-function update_system(A::Float64, B::Float64, move::Int64, live_position::Int64, sequence::Array{Int64}, CTA_mmol::Float64)
+function update_system(A::Float64, B::Float64, move::Float64, live_position::Int64, sequence::Array{Int64}, CTA_mmol::Float64)
     change = CTA_mmol / volume
 
     if move == 1 #0 # move is adding A 
@@ -89,14 +87,14 @@ function update_system(A::Float64, B::Float64, move::Int64, live_position::Int64
 end
 
 
-function run_seq(System_features, A_mmol::Float64, B_mmol::Float64)
+function run_block(System_features, A_mmol::Float64, B_mmol::Float64)
     #all_seqs::Array{Int64}, position::Array{Int64}
-    System_features.sequences = all_seqs
-    System_features.lengths = position
-    System_features.max_DP = max_DP
-    System_features.n_chains = n_chains
-    System_features.r_A = r_A 
-    System_features.r_B = r_B
+    all_seqs = System_features.sequences
+    position = System_features.lengths
+    max_DP = System_features.max_DP
+    n_chains = System_features.n_chains
+    r_A = System_features.r_A
+    r_B = System_features.r_B
 
     CTA_mmol = 1 / n_chains
 
@@ -118,6 +116,8 @@ function run_seq(System_features, A_mmol::Float64, B_mmol::Float64)
             all_seqs[chain, :], A_mmol, B_mmol, position[chain] = update_system(A_mmol, B_mmol, new, position[chain], all_seqs[chain, :], CTA_mmol)
         end
 
+        # println(A_mmol, B_mmol)
+
         if A_mmol < 0 || B_mmol < 0
             println("ERROR: negative concentrations obtained.")
             break
@@ -128,8 +128,29 @@ function run_seq(System_features, A_mmol::Float64, B_mmol::Float64)
 
     println("Simulation complete. Final concentrations are ", A_mmol, " and ", B_mmol)
 
-    Results.sequences = all_seqs
-    Results.lengths = position
+    System_features.sequences = all_seqs
+    System_features.lengths = position
 
-    return Results
+    return System_features
+end
+
+function run_seq(feed_ratios, n_chains, r_A, r_B)
+    num_blocks = length(feed_ratios[:,1])
+    max_DP = round(Int64, sum(feed_ratios)) + 50
+    sequences = zeros(n_chains, max_DP)
+    lengths = ones(Int64, n_chains)
+    system = System_features(max_DP, n_chains, sequences, lengths, r_A, r_B)
+
+    p = Progress(num_blocks; dt=0.01)
+
+    for block in 1:num_blocks
+        A_mmol = feed_ratios[block, 1]
+        B_mmol = feed_ratios[block, 2]
+
+        system = run_block(system, A_mmol, B_mmol)
+        
+        next!(p)
+    end
+
+    return system
 end

@@ -62,7 +62,7 @@ function growth(A::Float64, B::Float64, sequence::Array{Int64}, live_position::I
     end
 end
 
-function update_system(A::Float64, B::Float64, move::Float64, live_position::Int64, sequence::Array{Int64}, CTA_mmol::Float64)
+function update_system(A::Float64, B::Float64, move::Int64, live_position::Int64, sequence::Array{Int64}, CTA_mmol::Float64)
     change = CTA_mmol / volume
 
     if move == 1 #0 # move is adding A 
@@ -141,7 +141,7 @@ function run_seq(feed_ratios, n_chains, r_A, r_B)
     lengths = ones(Int64, n_chains)
     system = System_features(max_DP, n_chains, sequences, lengths, r_A, r_B)
 
-    p = Progress(num_blocks; dt=0.01)
+    p = Progress(num_blocks; dt=1.0)
 
     for block in 1:num_blocks
         A_mmol = feed_ratios[block, 1]

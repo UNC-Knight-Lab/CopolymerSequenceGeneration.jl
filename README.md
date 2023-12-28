@@ -6,7 +6,7 @@ Hello! The CopolymerSequenceGeneration package can be used to generate sequences
 
 ## Installation and usage
 
-A version of Julia >= 1.6 is required to run this package. Julia language can be [downloaded] (https://julialang.org/). The package can be downloaded and installed for use with:
+A version of Julia >= 1.6 is required to run this package. Julia language can be [downloaded](https://julialang.org/). The package can be downloaded and installed for use with:
 
 ```pkg > add https://github.com/UNC-Knight-Lab/CopolymerSequenceGeneration.jl```
 

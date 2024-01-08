@@ -54,9 +54,9 @@ function growth(A::Float64, B::Float64, sequence::Array{Int64}, live_position::I
     u = rand()*rates_add[2,3]
 
     if rates_add[1,3] < u <= rates_add[2,3]
-        return rates_add[2,2]
+        return Int(rates_add[2,2])
     elseif u <= rates_add[1,3]
-        return rates_add[1,2]
+        return Int(rates_add[1,2])
     else
         println("Error performing move, random number u is ", u)
     end
